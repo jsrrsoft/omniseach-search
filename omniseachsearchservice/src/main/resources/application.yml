@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: omniseach-search-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/omniseach
+      database: omniseach
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
