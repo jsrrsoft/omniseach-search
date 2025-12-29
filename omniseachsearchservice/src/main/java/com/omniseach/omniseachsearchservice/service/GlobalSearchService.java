@@ -14,6 +14,7 @@ import com.omniseach.omniseachsearchservice.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
+
 @Service
 @RequiredArgsConstructor
 public class GlobalSearchService {
@@ -26,20 +27,14 @@ public class GlobalSearchService {
 
         Map<String, Object> result = new HashMap<>();
 
-        result.put(
-            "messages",
-            messageRepository.findByContentContainingIgnoreCase(query)
-        );
+        result.put("messages",
+            messageRepository.findByContentContainingIgnoreCase(query));
 
-        result.put(
-            "posts",
-            postRepository.findByTextContainingIgnoreCase(query)
-        );
+        result.put("posts",
+            postRepository.findByTextContainingIgnoreCase(query));
 
-        result.put(
-            "photos",
-            photoRepository.findByTagsInIgnoreCase(List.of(query))
-        );
+        result.put("photos",
+            photoRepository.findByTagsInIgnoreCase(List.of(query)));
 
         return result;
     }
