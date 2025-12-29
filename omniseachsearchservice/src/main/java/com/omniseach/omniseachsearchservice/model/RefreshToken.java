@@ -1,27 +1,24 @@
 package com.omniseach.omniseachsearchservice.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Document(collection = "posts")
+@Document(collection = "refresh_tokens")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Post {
+public class RefreshToken {
 
     @Id
     private String id;
 
     private String userId;
-
-    private String text;
-
-    private LocalDateTime createdAt;
+    private String token;
+    private Instant expiry;
 }
