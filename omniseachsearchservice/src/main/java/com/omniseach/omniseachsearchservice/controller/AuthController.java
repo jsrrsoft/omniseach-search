@@ -1,14 +1,14 @@
 package com.omniseach.omniseachsearchservice.controller;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.omniseach.omniseachsearchservice.dto.AuthResponse;
+import com.omniseach.omniseachsearchservice.dto.LoginRequestDto;
+import com.omniseach.omniseachsearchservice.dto.RegisterRequestDto;
 import com.omniseach.omniseachsearchservice.model.RefreshToken;
-import com.omniseach.omniseachsearchservice.repository.RefreshTokenRepository;
-import com.omniseach.omniseachsearchservice.util.JwtUtil;
+import com.omniseach.omniseachsearchservice.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,37 +17,74 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final JwtUtil jwtUtil;
-    private final RefreshTokenRepository refreshRepo;
+    private final AuthService authService;
 
-    @PostMapping("/login")
-    public AuthResponse login(@RequestParam String userId) {
-
-        String accessToken = jwtUtil.generateToken(userId);
-
-        RefreshToken refresh = new RefreshToken();
-        refresh.setUserId(userId);
-        refresh.setToken(UUID.randomUUID().toString());
-        refresh.setExpiry(Instant.now().plusSeconds(7 * 86400));
-
-        refreshRepo.save(refresh);
-
-        return new AuthResponse(accessToken, refresh.getToken());
+    /* =========================
+       REGISTER
+       ========================= */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequestDto dto) {
+        authService.register(dto);
+        return ResponseEntity.ok(Map.of("message", "Registration successful. Please verify email."));
     }
 
+    /* =========================
+       LOGIN
+       ========================= */
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto dto) {
+
+        String accessToken = authService.login(dto);
+        RefreshToken refreshToken = authService.createRefreshToken(dto.getUsername());
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "accessToken", accessToken,
+                        "refreshToken", refreshToken.getToken()
+                )
+        );
+    }
+
+    /* =========================
+       REFRESH TOKEN
+       ========================= */
     @PostMapping("/refresh")
-    public AuthResponse refresh(@RequestParam String refreshToken) {
+    public ResponseEntity<?> refresh(@RequestParam String refreshToken) {
 
-        RefreshToken token = refreshRepo.findByToken(refreshToken)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+        String newAccessToken = authService.refreshAccessToken(refreshToken);
 
-        if (token.getExpiry().isBefore(Instant.now())) {
-            throw new RuntimeException("Refresh token expired");
-        }
+        return ResponseEntity.ok(
+                Map.of("accessToken", newAccessToken)
+        );
+    }
 
-        String newAccessToken =
-                jwtUtil.generateToken(token.getUserId());
+    /* =========================
+       VERIFY EMAIL
+       ========================= */
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok("Email verified successfully");
+    }
 
-        return new AuthResponse(newAccessToken, refreshToken);
+    /* =========================
+       FORGOT PASSWORD
+       ========================= */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        authService.forgotPassword(email);
+        return ResponseEntity.ok("Password reset email sent");
+    }
+
+    /* =========================
+       RESET PASSWORD
+       ========================= */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String token,
+            @RequestParam String password
+    ) {
+        authService.resetPassword(token, password);
+        return ResponseEntity.ok("Password reset successful");
     }
 }
